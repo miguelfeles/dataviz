@@ -118,13 +118,13 @@
 <body>
     <div class="dashboard-container">
         <header>
-            <h1>Interactive Storytelling Dashboard</h1>
-            <p>Explore the data insights and trends through interactive charts and narratives.</p>
+            <h1>Visualización de Datos</h1>
+            <p>Aquí encontras información relevantes sobre los datos recopilacos de los estudiantes del Pregrado en Ciencia de Datos.</p>
         </header>
 
         <section class="story-section" id="intro">
-            <h2>Introduction</h2>
-            <p>Welcome to our interactive storytelling dashboard. Here, you'll find a comprehensive analysis of our sales performance, product category comparisons, market share, and revenue growth. Each section is designed to provide valuable insights through engaging narratives and interactive charts.</p>
+            <h2>Introducción</h2>
+            <p>Aquí se encuentra los datos demográficos de los estudiantes de la materia de visualización del pregado en Ciencia de Datos en la Universidad Externado</p>
         </section>
         
         <section class="chart-container" id="chart1-section">
@@ -157,8 +157,8 @@
 
         <section class="chart-container" style="display: block;" id="chart3-section">
             <div class="chart-text">
-                <h2>Product Category Comparison</h2>
-                <p>Observe the comparison between different product categories. Category A and B have shown substantial growth, indicating a strong consumer preference for these products.</p>
+                <h2>Preferencias y sueños</h2>
+                <p>Aquí se encuentra informaciión de los sueños y metas de las personas del pregrado en Ciencia de Datos</p>
             </div>
             <div id="treemap" style="width: 100%; height: 600px;"></div>
         </section>
@@ -166,8 +166,8 @@
 
         <section class="chart-container" style="display: block;" id="chart3-section">
             <div class="chart-text">
-                <h2>Product Category Comparison</h2>
-                <p>Observe the comparison between different product categories. Category A and B have shown substantial growth, indicating a strong consumer preference for these products.</p>
+                <h2>Mapa de palabras sobre la imagénes</h2>
+                <p>Tras ejecutar un modelo de detección de objetos aquí se encuentran los elementos temas principales de cada una de las fotos.</p>
             </div>
             <div id="word-cloud" style="width: 100%; height: 600px;"></div>
         </section>
@@ -357,7 +357,7 @@
         for (var city in cityData) {
             var cityInfo = cityData[city];
             L.circle([cityInfo.lat, cityInfo.lng], {
-                color: 'red',
+                color: 'blue',
                 fillColor: '#f03',
                 fillOpacity: 0.5,
                 radius: cityInfo.count * 50000
