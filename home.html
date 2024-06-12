@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storytelling Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.0.6/wordcloud2.min.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            transition: background 1s ease;
+        }
+        .dashboard-container {
+            width: 90%;
+            margin: auto;
+            padding: 20px;
+        }
+        header {
+            background: #282c34;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 3px solid #61dafb;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        header p {
+            margin: 10px 0 0;
+            font-size: 1.2em;
+        }
+        .story-section {
+            background: #fff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+        .story-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .story-section h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            color: #282c34;
+        }
+        .story-section p {
+            font-size: 1em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            margin-left: 5%;
+            display: flex;
+            width: 90%;
+            background: #fff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+        .chart-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .chart-container h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #282c34;
+        }
+        .chart-container p {
+            font-size: 1em;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .chart-container, .story-section {
+                margin-top: 20px;
+            }
+        }
+        .column {
+            flex: 1;
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chart-wrapper, .map-wrapper {
+            width: 100%;
+        }
+
+        #countryMap {
+            height: 100%;
+            min-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>Interactive Storytelling Dashboard</h1>
+            <p>Explore the data insights and trends through interactive charts and narratives.</p>
+        </header>
+
+        <section class="story-section" id="intro">
+            <h2>Introduction</h2>
+            <p>Welcome to our interactive storytelling dashboard. Here, you'll find a comprehensive analysis of our sales performance, product category comparisons, market share, and revenue growth. Each section is designed to provide valuable insights through engaging narratives and interactive charts.</p>
+        </section>
+        
+        <section class="chart-container" id="chart1-section">
+            <div class="column left-column">
+                <div class="chart-wrapper">
+                    <canvas id="chart1"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="chart2"></canvas>
+                </div>
+            </div>
+            <div class="column right-column">
+                <div id="countryMap" class="map-wrapper"></div>
+            </div>
+        </section>
+
+        <section class="chart-container" id="chart1-section">
+            <div class="column left-column">
+                <div class="chart-wrapper">
+                    <canvas id="chart3"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="chart4"></canvas>
+                </div>
+            </div>
+            <div class="column right-column">
+                <div id="cityMap" style="height: 100%; margin-top: 20px;" class="map-wrapper"></div>
+            </div>
+        </section>
+
+        <section class="chart-container" style="display: block;" id="chart3-section">
+            <div class="chart-text">
+                <h2>Product Category Comparison</h2>
+                <p>Observe the comparison between different product categories. Category A and B have shown substantial growth, indicating a strong consumer preference for these products.</p>
+            </div>
+            <div id="treemap" style="width: 100%; height: 600px;"></div>
+        </section>
+
+
+        <section class="chart-container" style="display: block;" id="chart3-section">
+            <div class="chart-text">
+                <h2>Product Category Comparison</h2>
+                <p>Observe the comparison between different product categories. Category A and B have shown substantial growth, indicating a strong consumer preference for these products.</p>
+            </div>
+            <div id="word-cloud" style="width: 100%; height: 600px;"></div>
+        </section>
+    
+    </div>
+
+    
+    <script>
+    document.addEventListener('scroll', function() {
+            const elements = document.querySelectorAll('.story-section, .chart-container');
+            elements.forEach(element => {
+                const position = element.getBoundingClientRect();
+                if (position.top < window.innerHeight && position.bottom >= 0) {
+                    element.classList.add('visible');
+                }
+            });
+        });
+        
+    const ctx1 = document.getElementById('chart1').getContext('2d');
+    const chart1 = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: [19, 22, 20, 18, 26, 23, 24],
+            datasets: [{
+                label: 'Sales',
+                data: [14, 5, 4, 4, 1, 1, 1],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+
+
+    const ctx2 = document.getElementById('chart2').getContext('2d');
+    const chart2 = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: ['Masculino', 'Femenino'],
+            datasets: [{
+                label: 'Sales',
+                data: [22, 15],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    const ctx3 = document.getElementById('chart3').getContext('2d');
+    const chart3 = new Chart(ctx3, {
+        type: 'pie',
+        data: {
+            labels: ['Team Frío', 'Team Cálido'],
+            datasets: [{
+                label: 'Market Share',
+                data: [4, 1],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+
+    const ctx4 = document.getElementById('chart4').getContext('2d');
+    const chart4 = new Chart(ctx4, {
+        type: 'bar',
+        data: {
+            labels: ['Madrugar', 'Trasnochar'],
+            datasets: [{
+                label: 'Revenue',
+                data: [4, 1],
+                backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+    // Create a map for countries
+    var countryMap = L.map('countryMap').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(countryMap);
+
+        // Data for countries
+    var countryData = {
+            "Japón": { "lat": 36.2048, "lng": 138.2529, "count": 1 },
+            "Grecia": { "lat": 39.0742, "lng": 21.8243, "count": 1 },
+            "Noruega": { "lat": 60.4720, "lng": 8.4689, "count": 2 },
+            "Alemania": { "lat": 51.1657, "lng": 10.4515, "count": 1 }
+        };
+
+    for (var country in countryData) {
+            var countryInfo = countryData[country];
+            L.circle([countryInfo.lat, countryInfo.lng], {
+                color: 'blue',
+                fillColor: '#30f',
+                fillOpacity: 0.5,
+                radius: countryInfo.count * 50000
+            }).bindPopup(country + ": " + countryInfo.count).addTo(countryMap);
+        }
+
+        // Create a map for cities
+    var cityMap = L.map('cityMap').setView([4.7110, -74.0721], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(cityMap);
+
+        // Data for cities
+        var cityData = {
+            "Bogotá": { "lat": 4.7110, "lng": -74.0721, "count": 23 },
+            "Bogota": { "lat": 4.7110, "lng": -74.0721, "count": 2 },
+            "Aguazul": { "lat": 5.1733, "lng": -72.5525, "count": 1 },
+            "Dovio - Valle del Cauca": { "lat": 4.0526, "lng": -76.2338, "count": 1 },
+            "Mogotes": { "lat": 6.4728, "lng": -72.9701, "count": 1 },
+            "Pueblo* Facatativa": { "lat": 4.8133, "lng": -74.3545, "count": 1 },
+            "San Andrés": { "lat": 12.5847, "lng": -81.7006, "count": 1 }
+        };
+
+        for (var city in cityData) {
+            var cityInfo = cityData[city];
+            L.circle([cityInfo.lat, cityInfo.lng], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: cityInfo.count * 50000
+            }).bindPopup(city + ": " + cityInfo.count).addTo(cityMap);
+        }
+
+        var data = [{
+            type: "treemap",
+            labels: ["Entrenamiento",'Formato Principal', 'Plataforma de Streaming','Redes Sociales',
+                    'Música',  'Películas',  'Series de Streaming',  'Videojuegos',  'Deportes',  'Podcast',  'Libros',  'Juegos de Mesa',  'Otro',  'Radio',
+                     'Netflix', 'Disney+', 'Prime Video', 'Otra', 'Max', 'Apple TV', 'Ninguna',
+                     'Instragram','YouTube','Tik Tok','LinkedIn','X','Facebook','Otra','Snapchat','Ninguna'],
+
+            parents: ["", "Entrenamiento", "Entrenamiento", "Entrenamiento",
+                      'Formato Principal',  'Formato Principal',  'Formato Principal',  'Formato Principal',  'Formato Principal',  'Formato Principal',  'Formato Principal',  'Formato Principal',  'Formato Principal',  'Formato Principal',
+                      'Plataforma de Streaming',  'Plataforma de Streaming',  'Plataforma de Streaming',  'Plataforma de Streaming',  'Plataforma de Streaming',  'Plataforma de Streaming',  'Plataforma de Streaming',
+                      'Redes Sociales',  'Redes Sociales',  'Redes Sociales',  'Redes Sociales',  'Redes Sociales',  'Redes Sociales',  'Redes Sociales',  'Redes Sociales',  'Redes Sociales'],
+            values: [26, 23, 19, 19, 15, 14, 14, 13, 7, 2,
+            25, 19, 13, 10, 9, 3, 1,
+            26, 25, 21, 20, 14, 12, 2, 2, 1
+        ],
+            textinfo: "label+value+percent entry",
+            outsidetextfont: {"size": 20, "color": "#377eb8"},
+            marker: {"line": {"width": 2}},
+            pathbar: {"visible": false}
+        }];
+
+        var layout = {
+            title: "TreeMap de Entrenamiento",
+            margin: {"t": 50, "l": 25, "r": 25, "b": 25}
+        };
+
+        Plotly.newPlot('treemap', data, layout);
+        
+        var words = [
+            ["rompecabezas", 20],
+            ["cartón", 20],
+            ["traje", 20],
+            ["Chihuahua", 20],
+            ["pastel_de_carne", 10],
+            ["mosquitera", 10],
+            ["arco", 10],
+            ["restaurante", 10],
+            ["cubierta_de_libro", 10],
+            ["panadería", 10],
+            ["uniforme_militar", 10],
+            ["gato_tigre", 10],
+            ["carrito_de_compras", 10],
+            ["pantalla", 10],
+            ["alazán", 10],
+            ["cómic", 10],
+            ["sitio_web", 10],
+            ["peluca", 10],
+            ["atigrado", 10],
+            ["limusina", 10],
+            ["colcha", 10],
+            ["keeshond", 10],
+            ["plato", 10],
+            ["gato_persa", 10],
+            ["perro_de_caza_de_Chesapeake_Bay", 10],
+            ["marcador", 10]
+        ];
+
+        WordCloud(document.getElementById('word-cloud'), {
+            list: words,
+            gridSize: Math.round(16 * window.innerWidth / 1024),
+            weightFactor: function (size) {
+                return size * (window.innerWidth / 1024);
+            },
+            fontFamily: 'Times, serif',
+            color: function () {
+                return (['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'])[Math.floor(Math.random() * 6)];
+            },
+            rotateRatio: 0.5,
+            rotationSteps: 2,
+            backgroundColor: '#333'
+        });
+    </script>
+</body>
+</html>
+
